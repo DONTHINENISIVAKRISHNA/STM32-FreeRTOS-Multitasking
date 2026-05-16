@@ -161,8 +161,6 @@ Parity - None
 - Used for flashing firmware and debugging
 - Not used for data output — UART handles that
 
----
-
 ## Key CubeMX Configuration Decisions
 
 ### Why TIM1 as Timebase?
@@ -174,7 +172,6 @@ Without it, `printf` uses a shared internal buffer — not thread-safe. When 3 t
 ### Why INCLUDE_uxTaskGetStackHighWaterMark = 1?
 This function is disabled by default to save memory. Enabling it allows UptimeTask to monitor its own stack health live — a production-level defensive programming technique.
 
----
 
 ## Expected PuTTY Output
 
@@ -196,9 +193,6 @@ This function is disabled by default to save memory. Enabling it allows UptimeTa
 [LED_TASK]     Toggle #10 | LED ON
 [COUNTER_TASK] Count:     3 | Time:  3001 ms
 [UPTIME_TASK]  Uptime:    4 sec | Stack free: 393 words
-```
-
----
 
 ## Real World Applications
 
@@ -206,11 +200,9 @@ This function is disabled by default to save memory. Enabling it allows UptimeTa
 - **Medical Devices** — Patient monitors with separate tasks for each vital sign
 - **IoT / Industrial** — Sensor reading + communication + diagnostics running simultaneously
 
----
-
 ## Author
 
 **Siva Krishna Donthineni**
-M.S. Computer Engineering | Arizona State University
-Embedded Firmware & Software Engineer | STM32 · FreeRTOS · C/C++ · ARM Cortex-M
+M.S. Computer Engineering, Arizona State University
+Embedded Firmware & Software Engineer ,STM32 · FreeRTOS · C/C++ · ARM Cortex-M
 
