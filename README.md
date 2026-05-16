@@ -89,14 +89,15 @@ void StartUptimeTask(void const * argument)
 The STM32F103RB has **one CPU core** , it cannot truly run 3 things at the same time. FreeRTOS solves this using a **preemptive scheduler**.
 
 ### How It Works
+LEDTask — Every 500ms (0.5 seconds)
+LEDTask is the fastest running task in this project. Every 500 milliseconds it toggles the onboard LD2 green LED on PA5 between ON and OFF. This means the LED blinks twice every second. The task also keeps an internal toggle counter and prints a message to the terminal every 10 toggles — which is every 5 seconds. After toggling the LED it immediately calls vTaskDelay(500ms) and goes to sleep, releasing the CPU to other tasks.
 
-```
-TIME(ms):    0      500     1000     1500     2000
-             |       |        |        |        |
-LEDTask:   [RUN]--BLOCKED--[RUN]--BLOCKED----[RUN]
-CounterTask: [RUN]----------BLOCKED(1000ms)--[RUN]
-UptimeTask:  [RUN]--------------------BLOCKED(2000ms)----[RUN]
-```
+CounterTask — Every 1000ms (1 second)
+CounterTask runs every 1 second. Each time it wakes up it increments an internal counter by 1 and prints the counter value along with the current FreeRTOS tick time in milliseconds. This shows exactly how much time has passed since the scheduler started. You can see this in PuTTY as Count: 1, Count: 2, Count: 3 appearing every second. After printing it calls vTaskDelay(1000ms) and sleeps for 1 second.
+
+UptimeTask — Every 2000ms (2 seconds)
+UptimeTask is the slowest running task. Every 2 seconds it wakes up, adds 2 to an uptime counter, and prints how many seconds the system has been running. It also prints the stack health using uxTaskGetStackHighWaterMark() which shows how many words of stack memory are still free. In this project it shows 393 words free — meaning the task is running safely with no overflow danger. After printing it calls vTaskDelay(2000ms) and sleeps for 2 seconds.
+
 
 1. All 3 tasks start and immediately call `vTaskDelay()`
 2. Each task enters **BLOCKED state** — CPU is released
@@ -113,7 +114,6 @@ READY -Wants CPU — waiting its turn
 BLOCKED -Sleeping — waiting for delay or event. CPU is FREE 
 SUSPENDED -Manually paused — ignored by scheduler 
 
----
 HAL_Delay(500)
 HAL_Delay is a simple blocking delay function provided by the STM32 HAL library. When you call HAL_Delay(500), the CPU sits in a tight loop doing nothing for 500 milliseconds. During this entire time the CPU is occupied ,it cannot do anything else. No other task can run, no other operation can execute. Everything freezes and waits until the 500ms is over. This is called a blocking delay because it blocks the entire CPU.
 In a bare-metal single task program this is acceptable. But inside FreeRTOS with multiple tasks, using HAL_Delay is a serious mistake because one task holding the CPU for 500ms means all other tasks are completely frozen during that time. Timings break, responsiveness is lost, and the whole point of having an RTOS is defeated.
@@ -122,7 +122,6 @@ vTaskDelay is the FreeRTOS-aware delay function. When a task calls vTaskDelay(pd
 The CPU is never wasted ,it is always doing useful work in another task while the first task is sleeping. This is called a non-blocking delay because the task sleeps without blocking the CPU.
 pdMS_TO_TICKS() is a macro that converts milliseconds into FreeRTOS tick counts, making the delay value independent of the tick rate configuration.
 
----
 
 ## FreeRTOS Tools Used and their purpose.
 
@@ -172,27 +171,6 @@ Without it, `printf` uses a shared internal buffer — not thread-safe. When 3 t
 ### Why INCLUDE_uxTaskGetStackHighWaterMark = 1?
 This function is disabled by default to save memory. Enabling it allows UptimeTask to monitor its own stack health live — a production-level defensive programming technique.
 
-
-## Expected PuTTY Output
-
-==============================================
-  STM32 FreeRTOS Workshop - Module 7A
-  Tasks + Scheduler Basics
-  SIVA KRISHNA DONTHINENI
-==============================================
-
-[LED_TASK]     Started. Blinking every 500ms.
-[COUNTER_TASK] Started. Printing every 1000ms.
-[UPTIME_TASK]  Started. Printing every 2000ms.
--------------------------------------------
-  SIVA KRISHNA DONTHINENI - Module 7A
--------------------------------------------
-[COUNTER_TASK] Count:     1 | Time:  1001 ms
-[UPTIME_TASK]  Uptime:    2 sec | Stack free: 393 words
-[COUNTER_TASK] Count:     2 | Time:  2001 ms
-[LED_TASK]     Toggle #10 | LED ON
-[COUNTER_TASK] Count:     3 | Time:  3001 ms
-[UPTIME_TASK]  Uptime:    4 sec | Stack free: 393 words
 
 ## Real World Applications
 
